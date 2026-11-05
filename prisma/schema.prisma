@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Sede {
+  id        Int    @id @default(autoincrement())
+  nombre    String @unique
+  direccion String
+  dias      String
+  horaDesde String
+  horaHasta String
+}
+
+model Mascota {
+  id        Int     @id @default(autoincrement())
+  nombre    String
+  especie   String
+  raza      String?  sexo      String?
+  fechaNacimiento String
+  foto      String?
+  userId    Int?
+  user      Usuario? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  turnos    Turno[]
+  createdAt String  @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  @@index([userId])
+}
+
+model Usuario {
+  id            Int                 @id @default(autoincrement())
+  nombre        String
+  email         String              @unique
+  passwordHash  String              @map("password")
+  sessionVersion Int                @default(0)
+  mustChangePassword Boolean        @default(false)
+  role          String              @default("USER")
+  telefono      String?
+  createdAt     String              @default(dbgenerated("CURRENT_TIMESTAMP"))
+  mascotas      Mascota[]
+  turnos        Turno[]
+  notifications Notification[]
+
+  @@map("Usuario")
+}
+
+model Turno {
+  id            Int            @id @default(autoincrement())
+  tipo          String
+  sede          String
+  fecha         String
+  hora          String
+  llegadaEn     String?
+  atendidoEn    String?
+  descripcion   String?
+  recordatorioEnviadoEn String?
+  userId        Int
+  user          Usuario        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mascotaId     Int
+  mascota       Mascota        @relation(fields: [mascotaId], references: [id], onDelete: Cascade)
+  createdAt     String         @default(dbgenerated("CURRENT_TIMESTAMP"))
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([mascotaId])
+  @@unique([sede, fecha, hora])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  turnoId   Int?
+  title     String
+  message   String
+  readAt    String?
+  createdAt String   @default(dbgenerated("CURRENT_TIMESTAMP"))  mascotaNombre String?
+  mascotaFoto   String?  motivo        String?  sede          String?
+  hora          String?  esGlobal      Boolean   @default(false)  tipo              String?
+  solicitanteEmail  String?
+  user      Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  turno     Turno?   @relation(fields: [turnoId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}
